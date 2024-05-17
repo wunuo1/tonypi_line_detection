@@ -1,62 +1,60 @@
 # tonypi_line_detection
-# 功能介绍
+# Function Introduction
 
-基于深度学习的方法识别图像中引导线的中点并发布消息，使用模型为resnet18
+Using deep learning methods, this package identifies the midpoint of guide lines in images and publishes messages. The model used is resnet18.
 
-# 使用方法
+# Usage
 
-## 准备工作
+## Preparations
 
-具备TonyPi人形机器人，包含机器人本体、相机及RDK套件，并且能够正常运行。
+Have a TonyPi humanoid robot, including the robot body, camera, and RDK suite, and ensure it runs normally.
 
-## 安装功能包
+## Install the Package
 
-**1.安装功能包**
+**1. Install the package**
 
-启动机器人后，通过终端SSH或者VNC连接机器人，点击本页面右上方的“一键部署”按钮，复制如下命令在RDK的系统上运行，完成相关Node的安装。
+After starting the robot, connect to the robot through terminal SSH or VNC, click the "One-click Deployment" button at the top right of this page, copy the following command to run on the RDK system to complete the installation of the relevant Node.
 
 ```bash
 sudo apt update
 sudo apt install -y tros-tonypi-line-detection
 ```
-
-**2.运行巡线感知功能**
+**2. Run the Task Decomposition Function**
 
 ```shell
 source /opt/tros/local_setup.bash
 
-# web端可视化引导线中点（启动功能后在浏览器打开 ip:8000）
+# Visualize the guide line midpoint on the web (after starting the function, open ip:8000 in the browser)
 export WEB_SHOW=TRUE
 
 ros2 launch tonypi_line_detection line_center_detection.launch.py
 ```
 
+# Principle Overview
+The RDK X3 obtains data from the environment in front of the robot through the camera. The image data is inferred using a trained model to get the coordinates of the guide line and publishes them.
 
-# 原理简介
+# Interface Description
 
-地平线RDK通过摄像头获取机器人前方环境数据，图像数据通过训练好的模型进行推理得到引导线的坐标值并发布。
+## Topics
 
-# 接口说明
+### Published Topics
 
-## 话题
+|Name  | Type                                  |  Description           |
+|------| --------------------------------------| --------------------------------|
+|/line_center_detection |ai_msgs::msg::PerceptionTargets | Publishes the image coordinates of the guide line midpoint|
 
-### Pub话题
+### Subscribed Topics
 
-| 名称                          | 消息类型                                                     | 说明                                                   |
-| ----------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| /line_center_detection        | ai_msgs::msg::PerceptionTargets               | 发布引导线中点的图像坐标                 |
+|Name  | Type                                  |  Description           |
+|------| --------------------------------------| --------------------------------|
+|/hb_image |hbm_img_msgs/msg/HbmMsg1080P| Image message published by the image correction node (640x480)|
 
-### Sub话题
-| 名称                          | 消息类型                                                     | 说明                                                   |
-| ----------------------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
-| /hb_image                     | hbm_img_msgs/msg/HbmMsg1080P                                 | 图像矫正节点发布的图片消息（640x480）                   |
 
-## 参数
+## Parameters
+| Parameter Name             | Type       | Description  |
+| --------------------- | ----------- | ----------------------------------------------------- |
+| model_path	|string	|The model file used for inference. Configure according to the actual model path. Default value is /opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin |
+| sub_img_topic	|string	|The name of the subscribed image topic. Configure according to the actual received topic name. Default value is /hb_image |
 
-| 参数名                | 类型        | 说明   |
-| --------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
-| model_path       | string | 推理使用的模型文件，请根据实际模型路径配置，默认值为/opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin |
-| sub_img_topic    | string |  接收的图片话题名称，请根据实际接收到的话题名称配置，默认值为/hb_image |
-
-# 注意
-该功能包提供特定的实际场景中可使用的模型，若自行采集数据集进行训练，请注意替换。
+# Note
+This package provides a model that can be used in specific real-world scenarios. If you collect your own dataset for training, please replace the model accordingly.
