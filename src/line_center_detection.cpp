@@ -15,6 +15,7 @@
 #include "line_center_detection.h"
 
 #include "dnn_node/util/image_proc.h"
+#include "hobot_cv/hobotcv_imgproc.h"
 #include <opencv2/opencv.hpp>
 
 #include <fstream>
@@ -89,7 +90,7 @@ LineCenterDetectionNode::LineCenterDetectionNode(const std::string& node_name,
   publisher_ =
     this->create_publisher<ai_msgs::msg::PerceptionTargets>("line_center_detection", 5);
   subscriber_hbmem_ =
-    this->create_subscription_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
+    this->create_subscription<hbm_img_msgs::msg::HbmMsg1080P>(
       sub_img_topic_,
       10,
       std::bind(&LineCenterDetectionNode::subscription_callback,
@@ -110,28 +111,35 @@ int LineCenterDetectionNode::SetNodePara() {
   dnn_node_para_ptr_->model_file = model_path_;
   dnn_node_para_ptr_->model_task_type = model_task_type_;
   dnn_node_para_ptr_->task_num = 1;
-  dnn_node_para_ptr_->bpu_core_ids.push_back(hobot::dnn_node::BPUCoreIDType::BPU_CORE_1);;
+  dnn_node_para_ptr_->bpu_core_ids.push_back(HB_BPU_CORE_1);;
   return 0;
 }
 
-int LineCenterDetectionNode::SetOutputParser() {
-  auto model_manage = GetModel();
-  if (!model_manage) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "Invalid model");
-    return -1;
-  }
-  int output_index = model_manage->GetOutputCount() - 1;
+// int LineCenterDetectionNode::SetOutputParser() {
+//   auto model_manage = GetModel();
+//   if (!model_manage) {
+//     RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "Invalid model");
+//     return -1;
+//   }
+//   int output_index = model_manage->GetOutputCount() - 1;
 
-  std::shared_ptr<OutputParser> line_coordinate_parser =
-      std::make_shared<LineCoordinateParser>();
-  model_manage->SetOutputParser(output_index, line_coordinate_parser);
+//   std::shared_ptr<OutputParser> line_coordinate_parser =
+//       std::make_shared<LineCoordinateParser>();
+//   model_manage->SetOutputParser(output_index, line_coordinate_parser);
 
-  return 0;
-}
+//   return 0;
+// }
 
 int LineCenterDetectionNode::PostProcess(
   const std::shared_ptr<DnnNodeOutput> &outputs) {
-  auto result = dynamic_cast<LineCoordinateResult *>(outputs->outputs[0].get());  
+  std::shared_ptr<LineCoordinateParser> line_coordinate_parser =
+      std::make_shared<LineCoordinateParser>();
+
+  std::shared_ptr<LineCoordinateResult> result =
+      std::make_shared<LineCoordinateResult>();
+
+  line_coordinate_parser->Parse(result, outputs->output_tensors[0]);
+
   float x = result->x;
   float y = (result->y) + 256;
   RCLCPP_INFO(rclcpp::get_logger("LineCenterDetectionNode"),
@@ -183,36 +191,40 @@ void LineCenterDetectionNode::subscription_callback(
   roi.top = 480-224;
   roi.right = 640 - 1;
   roi.bottom = 480 - 1;
-  hbDNNTensor input_tensor;
-  prepare_nv12_tensor_without_padding(reinterpret_cast<const char*>(msg->data.data()),
-                                      msg->height,
-                                      msg->width,
-                                      &input_tensor);
-  // Prepare output tensor
-  hbDNNTensor output_tensor;
-  prepare_nv12_tensor_without_padding(224, 224, &output_tensor);
+  // hbDNNTensor input_tensor;
+  // prepare_nv12_tensor_without_padding(reinterpret_cast<const char*>(msg->data.data()),
+  //                                     msg->height,
+  //                                     msg->width,
+  //                                     &input_tensor);
+  // // Prepare output tensor
+  // hbDNNTensor output_tensor;
+  // prepare_nv12_tensor_without_padding(224, 224, &output_tensor);
 
   // resize
-  hbDNNResizeCtrlParam ctrl = {
-      HB_BPU_CORE_1, 0, HB_DNN_RESIZE_TYPE_BILINEAR, 0, 0, 0, 0};
-  hbDNNTaskHandle_t task_handle = nullptr;
-  hbDNNResize(&task_handle, &output_tensor, &input_tensor, &roi, &ctrl);
-  ret = hbDNNWaitTaskDone(task_handle, 0);
-  if (0 != ret) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "hbDNNWaitTaskDone failed!");
-    hbSysFreeMem(&(input_tensor.sysMem[0]));
-    hbSysFreeMem(&(output_tensor.sysMem[0]));
-  }
-  hbDNNReleaseTask(task_handle);
-  if (0 != ret) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "release task failed!");
-    hbSysFreeMem(&(input_tensor.sysMem[0]));
-    hbSysFreeMem(&(output_tensor.sysMem[0]));
-  }
+  cv::Mat img_mat(msg->height * 3 / 2, msg->width, CV_8UC1, (void*)(msg->data.data()));
+  cv::Range rowRange(roi.top, 480);
+  cv::Range colRange(roi.left, 640);
+  cv::Mat crop_img_mat = hobot_cv::hobotcv_crop(img_mat, msg->height, msg->width, 224, 224, rowRange, colRange);
+  // hbDNNResizeCtrlParam ctrl = {
+  //     HB_BPU_CORE_1, 0, HB_DNN_RESIZE_TYPE_BILINEAR, 0, 0, 0, 0};
+  // hbDNNTaskHandle_t task_handle = nullptr;
+  // hbDNNResize(&task_handle, &output_tensor, &input_tensor, &roi, &ctrl);
+  // ret = hbDNNWaitTaskDone(task_handle, 0);
+  // if (0 != ret) {
+  //   RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "hbDNNWaitTaskDone failed!");
+  //   hbSysFreeMem(&(input_tensor.sysMem[0]));
+  //   hbSysFreeMem(&(output_tensor.sysMem[0]));
+  // }
+  // hbDNNReleaseTask(task_handle);
+  // if (0 != ret) {
+  //   RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "release task failed!");
+  //   hbSysFreeMem(&(input_tensor.sysMem[0]));
+  //   hbSysFreeMem(&(output_tensor.sysMem[0]));
+  // }
 
   std::shared_ptr<hobot::easy_dnn::NV12PyramidInput> pyramid = nullptr;
   pyramid = hobot::dnn_node::ImageProc::GetNV12PyramidFromNV12Img(
-      reinterpret_cast<const char*>(output_tensor.sysMem[0].virAddr),
+      reinterpret_cast<const char*>(crop_img_mat.data),
       224,
       224,
       224,
@@ -241,17 +253,17 @@ void LineCenterDetectionNode::subscription_callback(
   dnn_output->msg_header->set__stamp(msg->time_stamp);
   ret = Predict(inputs, dnn_output, rois);
 
-  ret = hbSysFreeMem(&(input_tensor.sysMem[0]));
-  if (ret != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"),
-                 "Free input_tensor mem failed!");
-    hbSysFreeMem(&(output_tensor.sysMem[0]));
-  }
-  ret = hbSysFreeMem(&(output_tensor.sysMem[0]));
-  if (ret != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"),
-                 "Free output_tensor mem failed!");
-  }
+  // ret = hbSysFreeMem(&(input_tensor.sysMem[0]));
+  // if (ret != 0) {
+  //   RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"),
+  //                "Free input_tensor mem failed!");
+  //   hbSysFreeMem(&(output_tensor.sysMem[0]));
+  // }
+  // ret = hbSysFreeMem(&(output_tensor.sysMem[0]));
+  // if (ret != 0) {
+  //   RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"),
+  //                "Free output_tensor mem failed!");
+  // }
 
 
 }
@@ -269,10 +281,8 @@ int LineCenterDetectionNode::Predict(
 
 
 int32_t LineCoordinateParser::Parse(
-    std::shared_ptr<LineCoordinateResult> &output,
-    std::vector<std::shared_ptr<InputDescription>> &input_descriptions,
-    std::shared_ptr<OutputDescription> &output_description,
-    std::shared_ptr<DNNTensor> &output_tensor) {
+      std::shared_ptr<LineCoordinateResult>& output,
+      std::shared_ptr<DNNTensor>& output_tensor) {
   if (!output_tensor) {
     RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "invalid out tensor");
     rclcpp::shutdown();

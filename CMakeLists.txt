@@ -43,9 +43,11 @@ find_package(sensor_msgs REQUIRED)
 find_package(ai_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(hobot_cv REQUIRED)
 
 link_directories(
   ${CMAKE_SYSROOT}/usr/lib/hbbpu/
+  /usr/hobot/lib
 )
 
 add_executable(tonypi_line_detection src/line_center_detection.cpp)
@@ -59,6 +61,7 @@ ament_target_dependencies(
   hbm_img_msgs
   ai_msgs
   geometry_msgs
+  hobot_cv
 )
 
 target_link_libraries(${PROJECT_NAME}
