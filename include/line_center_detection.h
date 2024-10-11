@@ -79,8 +79,13 @@ class LineCenterDetectionNode : public DnnNode {
   bool GetParams();
   bool AssignParams(const std::vector<rclcpp::Parameter> & parameters);
   ModelTaskType model_task_type_ = ModelTaskType::ModelInferType;
+#ifdef UBUTNU_22
+  rclcpp::Subscription<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
+    subscriber_hbmem_ = nullptr;
+#else
   rclcpp::SubscriptionHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
     subscriber_hbmem_ = nullptr;
+#endif
   rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr publisher_ =
       nullptr;
   cv::Mat image_bgr_;
