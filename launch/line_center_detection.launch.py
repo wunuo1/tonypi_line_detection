@@ -86,7 +86,7 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {"sub_img_topic": "/hb_image"},
-            {"model_path": "/opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin"}
+            {"model_path": "config/tonypi_line_center_detection_x5.bin"}
         ],
         arguments=['--ros-args', '--log-level', 'warn']
     )

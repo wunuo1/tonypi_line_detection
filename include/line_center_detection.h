@@ -74,7 +74,7 @@ class LineCenterDetectionNode : public DnnNode {
   rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr publisher_ =
       nullptr;
   cv::Mat image_bgr_;
-  std::string model_path_ = "/opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin";
+  std::string model_path_ = "config/tonypi_line_center_detection_x5.bin";
   std::string sub_img_topic_ = "/image_correct";
 };
 
