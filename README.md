@@ -16,13 +16,22 @@ Have a TonyPi humanoid robot, including the robot body, camera, and RDK suite, a
 After starting the robot, connect to the robot through terminal SSH or VNC, click the "One-click Deployment" button at the top right of this page, copy the following command to run on the RDK system to complete the installation of the relevant Node.
 
 ```bash
-sudo apt update
-sudo apt install -y tros-tonypi-line-detection
+# Pull the track detection code and image correction code
+mkdir -p ~/tonypi_ws/src && cd ~/tonypi_ws/src
+git clone https://github.com/wunuo1/tonypi_line_detection.git -b feature-humble-x5
+git clone https://github.com/wunuo1/tonypi_image_correction.git -b feature-humble-x5
+
+#build
+cd ..
+source /opt/tros/setup.bash
+colcon build
 ```
+
 **2. Run the Task Decomposition Function**
 
 ```shell
-source /opt/tros/local_setup.bash
+source ~/tonypi_ws/install/setup.bash
+cp -r ~/tonypi_ws/install/tonypi_line_detection/lib/tonypi_line_detection/config/ .
 
 # Visualize the guide line midpoint on the web (after starting the function, open ip:8000 in the browser)
 export WEB_SHOW=TRUE
@@ -53,7 +62,7 @@ The RDK X3 obtains data from the environment in front of the robot through the c
 ## Parameters
 | Parameter Name             | Type       | Description  |
 | --------------------- | ----------- | ----------------------------------------------------- |
-| model_path	|string	|The model file used for inference. Configure according to the actual model path. Default value is /opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin |
+| model_path	|string	|The model file used for inference. Configure according to the actual model path. Default value is config/tonypi_line_center_detection_x5.bin |
 | sub_img_topic	|string	|The name of the subscribed image topic. Configure according to the actual received topic name. Default value is /hb_image |
 
 # Note

@@ -30,7 +30,7 @@ colcon build
 
 ```shell
 source ~/tonypi_ws/install/setup.bash
-cp -r ~/tonypi_ws/install/tonypi_line_detection/lib/tonypi_obj_detection/config/ .
+cp -r ~/tonypi_ws/install/tonypi_line_detection/lib/tonypi_line_detection/config/ .
 
 # web端可视化引导线中点（启动功能后在浏览器打开 ip:8000）
 export WEB_SHOW=TRUE
