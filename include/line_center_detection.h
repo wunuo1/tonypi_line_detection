@@ -79,12 +79,17 @@ class LineCenterDetectionNode : public DnnNode {
   bool GetParams();
   bool AssignParams(const std::vector<rclcpp::Parameter> & parameters);
   ModelTaskType model_task_type_ = ModelTaskType::ModelInferType;
+#ifdef UBUTNU_22
+  rclcpp::Subscription<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
+    subscriber_hbmem_ = nullptr;
+#else
   rclcpp::SubscriptionHbmem<hbm_img_msgs::msg::HbmMsg1080P>::SharedPtr
     subscriber_hbmem_ = nullptr;
+#endif
   rclcpp::Publisher<ai_msgs::msg::PerceptionTargets>::SharedPtr publisher_ =
       nullptr;
   cv::Mat image_bgr_;
-  std::string model_path_ = "/opt/nodehub_model/tonypi_detection/tonypi_line_center_detection.bin";
+  std::string model_path_ = "config/tonypi_line_center_detection_x3.bin";
   std::string sub_img_topic_ = "/image_correct";
 };
 

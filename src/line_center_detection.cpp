@@ -88,6 +88,15 @@ LineCenterDetectionNode::LineCenterDetectionNode(const std::string& node_name,
 
   publisher_ =
     this->create_publisher<ai_msgs::msg::PerceptionTargets>("line_center_detection", 5);
+#ifdef UBUTNU_22
+  subscriber_hbmem_ =
+    this->create_subscription<hbm_img_msgs::msg::HbmMsg1080P>(
+      sub_img_topic_,
+      10,
+      std::bind(&LineCenterDetectionNode::subscription_callback,
+      this,
+      std::placeholders::_1)); 
+#else
   subscriber_hbmem_ =
     this->create_subscription_hbmem<hbm_img_msgs::msg::HbmMsg1080P>(
       sub_img_topic_,
@@ -95,6 +104,7 @@ LineCenterDetectionNode::LineCenterDetectionNode(const std::string& node_name,
       std::bind(&LineCenterDetectionNode::subscription_callback,
       this,
       std::placeholders::_1)); 
+#endif
 }
 
 LineCenterDetectionNode::~LineCenterDetectionNode() {

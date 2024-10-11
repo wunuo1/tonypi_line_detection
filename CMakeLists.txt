@@ -30,6 +30,20 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+execute_process(
+    COMMAND lsb_release -rs
+    OUTPUT_VARIABLE UBUNTU_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if (${UBUNTU_VERSION} MATCHES "22.04")
+    message("This is Ubuntu 22.04")
+    add_definitions(-DUBUTNU_22)
+elseif(${UBUNTU_VERSION} MATCHES "20.04")
+    message("This is Ubuntu 20.04")
+else()
+    message(STATUS "This is a different version of Ubuntu")
+endif()
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -75,6 +89,11 @@ install(TARGETS tonypi_line_detection
 install(DIRECTORY
   ${PROJECT_SOURCE_DIR}/launch/
   DESTINATION share/${PROJECT_NAME}/launch)
+
+install(DIRECTORY
+	  ${PROJECT_SOURCE_DIR}/config/
+	    DESTINATION lib/${PROJECT_NAME}/config
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
