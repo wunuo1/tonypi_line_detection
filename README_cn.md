@@ -18,7 +18,7 @@
 # 拉取赛道检测代码与图像矫正代码
 mkdir -p ~/tonypi_ws/src && cd ~/tonypi_ws/src
 git clone https://github.com/wunuo1/tonypi_line_detection.git -b feature-x3
-git clone https://github.com/wunuo1/tonypi_image_correction.git -b feature-x3
+git clone https://github.com/wunuo1/tonypi_image_correction.git
 
 #编译
 cd ..

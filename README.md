@@ -19,7 +19,7 @@ After starting the robot, connect to the robot through terminal SSH or VNC, clic
 # Pull the track detection code and image correction code
 mkdir -p ~/tonypi_ws/src && cd ~/tonypi_ws/src
 git clone https://github.com/wunuo1/tonypi_line_detection.git -b feature-x3
-git clone https://github.com/wunuo1/tonypi_image_correction.git -b feature-x3
+git clone https://github.com/wunuo1/tonypi_image_correction.git
 
 #build
 cd ..
