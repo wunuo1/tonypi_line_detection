@@ -120,28 +120,24 @@ int LineCenterDetectionNode::SetNodePara() {
   dnn_node_para_ptr_->model_file = model_path_;
   dnn_node_para_ptr_->model_task_type = model_task_type_;
   dnn_node_para_ptr_->task_num = 1;
-  dnn_node_para_ptr_->bpu_core_ids.push_back(hobot::dnn_node::BPUCoreIDType::BPU_CORE_1);;
+#ifdef UBUTNU_22
+  dnn_node_para_ptr_->bpu_core_ids.push_back(HB_BPU_CORE_0);
+#else
+  dnn_node_para_ptr_->bpu_core_ids.push_back(hobot::dnn_node::BPUCoreIDType::BPU_CORE_1);
+#endif
   return 0;
 }
 
-int LineCenterDetectionNode::SetOutputParser() {
-  auto model_manage = GetModel();
-  if (!model_manage) {
-    RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "Invalid model");
-    return -1;
-  }
-  int output_index = model_manage->GetOutputCount() - 1;
-
-  std::shared_ptr<OutputParser> line_coordinate_parser =
-      std::make_shared<LineCoordinateParser>();
-  model_manage->SetOutputParser(output_index, line_coordinate_parser);
-
-  return 0;
-}
 
 int LineCenterDetectionNode::PostProcess(
   const std::shared_ptr<DnnNodeOutput> &outputs) {
-  auto result = dynamic_cast<LineCoordinateResult *>(outputs->outputs[0].get());  
+
+  std::shared_ptr<LineCoordinateParser> line_coordinate_parser =
+      std::make_shared<LineCoordinateParser>();
+  std::shared_ptr<LineCoordinateResult> result =
+      std::make_shared<LineCoordinateResult>();
+  line_coordinate_parser->Parse(result, outputs->output_tensors[0]);
+
   float x = result->x;
   float y = (result->y) + 256;
   RCLCPP_INFO(rclcpp::get_logger("LineCenterDetectionNode"),
@@ -279,10 +275,8 @@ int LineCenterDetectionNode::Predict(
 
 
 int32_t LineCoordinateParser::Parse(
-    std::shared_ptr<LineCoordinateResult> &output,
-    std::vector<std::shared_ptr<InputDescription>> &input_descriptions,
-    std::shared_ptr<OutputDescription> &output_description,
-    std::shared_ptr<DNNTensor> &output_tensor) {
+      std::shared_ptr<LineCoordinateResult>& output,
+      std::shared_ptr<DNNTensor>& output_tensor) {
   if (!output_tensor) {
     RCLCPP_ERROR(rclcpp::get_logger("LineCenterDetectionNode"), "invalid out tensor");
     rclcpp::shutdown();
