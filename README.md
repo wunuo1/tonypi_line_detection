@@ -26,9 +26,14 @@ git clone https://github.com/wunuo1/tonypi_line_detection.git -b feature-x5
 
 git clone https://github.com/wunuo1/tonypi_image_correction.git
 
-#build
+# Compile
 cd ..
+
+# RDK X5 
+source /opt/tros/humble/setup.bash
+# RDK X3
 source /opt/tros/setup.bash
+
 colcon build
 ```
 
